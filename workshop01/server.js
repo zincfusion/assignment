@@ -2,6 +2,7 @@ const express = require('express');
 const app = express();
 const expbs = require('express-handlebars');
 const path = require('path');
+const port = process.env.PORT || 8080
 
 app.set('view engine', 'handlebars');
 app.engine('handlebars', expbs.engine({
@@ -17,8 +18,8 @@ app.get('/', (req, res) => {
     res.render('home', {title: 'Home Page', dynamicText: dynamicText(), repository: 'https://github.com/zincfusion/assignment'});
 });
 
-app.listen(8080, () => {
-    console.log('Server is starting at port ', 8080);
+app.listen(port, () => {
+    console.log('Server is starting at port ', port);
 });
 
 function dynamicText() {
