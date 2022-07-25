@@ -1,4 +1,4 @@
-ARG GOLANG_VERSION="1.18-apline3.16"
+ARG GOLANG_VERSION="1.18-alpine3.16"
 ARG ALPINE_VERSION="3.16"
 
 FROM golang:${GOLANG_VERSION} AS builder
@@ -10,7 +10,7 @@ ADD main.go .
 
 # build the application
 # /app/main
-RUN go build -0 main. 
+RUN go build -o main . 
 
 # deployment container
 
