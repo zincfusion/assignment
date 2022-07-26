@@ -1,0 +1,32 @@
+---
+# 3 dash is to demarcate a config, can have multiple configs ina file
+apiVersion: v1
+kind: Pod
+metadata:
+  name: dov-bear-po
+  # mandatory to have labels
+  labels:
+    name: dov-bear-po
+    # not the best practice to hardcode NS
+  # namespace: myns
+spec: 
+  containers:
+  # array
+  - name: dov-bear
+    image: chukmunnlee/dov-bear:v1golang
+    # image: jclin226/dov-bear:1.0.0
+  # following controls how to handle when there is no image
+    imagePullPolicy: IfNotPresent
+    env:
+    - name: INSTANCE_NAME
+      value: pod-dov-bear
+    - name: INSTANCE_HASH
+      valueFrom:
+        fieldRef:
+          fieldPath: status.podIP
+    ports:
+    - containerPort: 3000
+    livenessProbe:
+      httpGet:
+        path: /healthz
+        port: 3000

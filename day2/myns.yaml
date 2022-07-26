@@ -1,0 +1,9 @@
+---
+# 3 dash is to demarcate a config, can have multiple configs ina file
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: myns
+  # mandatory to have labels
+  labels:
+    dept: eng
