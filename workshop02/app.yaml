@@ -1,70 +1,45 @@
 ---
-# config map
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: dov-cm
-  labels:
-    name: dov-cm
-data:
-  INSTANCE_NAME: myapp
----
-# secrets
-apiVersion: v1
-kind: Secret
-metadata:
-  name: dov-secret
-  labels:
-    name: dov-secret
-type: Opaque
-data:
-  db_password: smth
----
 # deployments
 # 3 dash is to demarcate a config, can have multiple configs ina file
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: dov-deploy
+  name: bggapp-deploy
   # mandatory to have labels
   labels:
-    name: dov-deploy
+    name: bggapp-deploy
 spec:
   replicas: 3
   selector:
     # e.g there could be multiple instances of dov-bear running but how to know which instances belong to this deployment?
     # the matchLabels follow the template label name to ensure instances belong to this deployment, does not need to be name, could be other fields and multiple fields
     matchLabels:
-      name: dov-po
+      name: bggapp-po
   # following specifies pod
   template:
     metadata:
-      name: dov-po
+      name: bggapp-po
       labels:
-        name: dov-po
+        name: bggapp-po
     spec:
       containers:
       # array
-      - name: dov-bear
-        image: chukmunnlee/dov-bear:v2
-        # image: jclin226/dov-bear:1.0.0
+      - name: bgg-application
+        image: stackupiss/bgg-backend:v1
       # following controls how to handle when there is no image
         imagePullPolicy: IfNotPresent
-        env:
-        - name: INSTANCE_NAME
-          value: pod-dov-bear
-        - name: INSTANCE_HASH
-          valueFrom:
-            fieldRef:
-              fieldPath: status.podIP
         envFrom:
         - configMapRef:
-            name: dov-cm
-        # - secretRef:
-        #     name: dov-secret
+            name: bgg-cm
+        - secretRef:
+            name: bgg-secret
         ports:
         - containerPort: 3000
         livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 3000
+        readinessProbe:
           httpGet:
             path: /healthz
             port: 3000
@@ -73,9 +48,9 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: dov-svc
+  name: bggapp-svc
   labels:
-    name: dov-svc
+    name: bggapp-svc
 spec:
   # provide internal IP address (within cloud)
   # type: ClusterIP
@@ -83,7 +58,7 @@ spec:
   # LoadBalancer will provide external IP, can check using kubectl get po,deploy,svc -nmyns -owide
   type: LoadBalancer
   selector:
-    name: dov-po
+    name: bggapp-po
   ports:
   # service port 80
   - port: 80
