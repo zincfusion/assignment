@@ -9,6 +9,12 @@ metadata:
 spec:
   # k get ingressclass
   ingressClassName: nginx
+  # default service if no routes are found
+  defaultBackend:
+    service:
+      name: bggappv2-svc
+      port:
+        number: 3000
   # how to route the traffic
   rules:
   # url for browser, uses nip.io
