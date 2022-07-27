@@ -10,6 +10,13 @@ metadata:
     name: bggapp-deploy
 spec:
   replicas: 3
+  # following until selector setup update behavior of pods
+  minReadySeconds: 5
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
   selector:
     # e.g there could be multiple instances of dov-bear running but how to know which instances belong to this deployment?
     # the matchLabels follow the template label name to ensure instances belong to this deployment, does not need to be name, could be other fields and multiple fields
@@ -25,7 +32,7 @@ spec:
       containers:
       # array
       - name: bgg-application
-        image: stackupiss/bgg-backend:v1
+        image: stackupiss/bgg-backend:v2
       # following controls how to handle when there is no image
         imagePullPolicy: IfNotPresent
         envFrom:
