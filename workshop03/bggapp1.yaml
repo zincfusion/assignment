@@ -1,0 +1,100 @@
+---
+# App v1 deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bggapp1-deploy
+  # mandatory to have labels
+  labels:
+    name: bggapp1-deploy
+spec:
+  replicas: 3
+  # following until selector setup update behavior of pods
+  minReadySeconds: 5
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    # e.g there could be multiple instances of dov-bear running but how to know which instances belong to this deployment?
+    # the matchLabels follow the template label name to ensure instances belong to this deployment, does not need to be name, could be other fields and multiple fields
+    matchLabels:
+      name: bggapp1-po
+  # following specifies pod
+  template:
+    metadata:
+      name: bggapp1-po
+      labels:
+        name: bggapp1-po
+    spec:
+      containers:
+      # array
+      - name: bggapp-v1
+        image: stackupiss/bgg-backend:v1
+        args:
+        - --prefix
+        - /v1
+        # following controls how to handle when there is no image
+        imagePullPolicy: IfNotPresent
+        envFrom:
+        - configMapRef:
+            name: bgg-cm
+        - secretRef:
+            name: bgg-secret
+        ports:
+        - containerPort: 3000
+        livenessProbe:
+          httpGet:
+            path: /v1/healthz
+            port: 3000
+        readinessProbe:
+          httpGet:
+            path: /v1/healthz
+            port: 3000
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+---
+# accessing the application section (clusterIP, NodePort)
+apiVersion: v1
+kind: Service
+metadata:
+  name: bggapp1-svc
+  labels:
+    name: bggapp1-svc
+spec:
+  # provide internal IP address (within cloud)
+  # type: ClusterIP
+  # type: NodePort
+  # LoadBalancer will provide external IP, can check using kubectl get po,deploy,svc -nmyns -owide
+  type: ClusterIP
+  selector:
+    name: bggapp1-po
+  ports:
+  # service port 80
+  - port: 3000
+    targetPort: 3000
+---
+# Horizontal scaling adds more pods when resource limit is hit or reduce when utilization is below threshold for prolong periods
+apiVersion: autoscaling/v2beta2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: bggapp1-hpa
+  labels:
+    name: bggapp1-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: bggapp1-deploy
+  minReplicas: 1
+  maxReplicas: 4
+  metrics:
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 70

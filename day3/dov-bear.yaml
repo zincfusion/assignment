@@ -1,0 +1,142 @@
+---
+# config map
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: dov-cm
+  labels:
+    name: dov-cm
+data:
+  INSTANCE_NAME: myapp
+---
+# secrets
+apiVersion: v1
+kind: Secret
+metadata:
+  name: dov-secret
+  labels:
+    name: dov-secret
+type: Opaque
+data:
+  db_password: smth
+---
+# deployments
+# 3 dash is to demarcate a config, can have multiple configs in a file
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dov-deploy
+  # mandatory to have labels
+  labels:
+    name: dov-deploy
+spec:
+  replicas: 3
+  selector:
+    # e.g there could be multiple instances of dov-bear running but how to know which instances belong to this deployment?
+    # the matchLabels follow the template label name to ensure instances belong to this deployment, does not need to be name, could be other fields and multiple fields
+    matchLabels:
+      name: dov-po
+  # following specifies pod
+  template:
+    metadata:
+      name: dov-po
+      labels:
+        name: dov-po
+    spec:
+      containers:
+      # array
+      - name: dov-bear
+        image: chukmunnlee/dov-bear:v2
+        # image: jclin226/dov-bear:1.0.0
+        # following controls how to handle when there is no image
+        imagePullPolicy: IfNotPresent
+        env:
+        - name: INSTANCE_NAME
+          value: pod-dov-bear
+        - name: INSTANCE_HASH
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        envFrom:
+        - configMapRef:
+            name: dov-cm
+        # - secretRef:
+        #     name: dov-secret
+        ports:
+        - containerPort: 3000
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 3000
+        resources:
+          requests:
+            cpu: 50m
+            memory: 128Mi
+---
+# accessing the application section (clusterIP, NodePort)
+apiVersion: v1
+kind: Service
+metadata:
+  name: dov-svc
+  labels:
+    name: dov-svc
+spec:
+  # provide internal IP address (within cloud)
+  # type: ClusterIP
+  # type: NodePort
+  # LoadBalancer will provide external IP, can check using kubectl get po,deploy,svc -nmyns -owide
+  type: ClusterIP
+  selector:
+    name: dov-po
+  ports:
+  # service port 80
+  - port: 3000
+    targetPort: 3000
+
+---
+# Ingress confirguration for this app, nginx or another ingress controller must be deployed first
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: dov-ing
+  labels:
+    name: dov-ing
+spec:
+  # k get ingressclass
+  ingressClassName: nginx
+  # how to route the traffic
+  rules:
+  # url for browser, uses nip.io
+  - host: dov-139.59.192.228.nip.io
+    http:
+      paths:
+      - path: /
+        # anything that starts with / are routed to 
+        pathType: Prefix
+        backend:
+          service:
+            name: dov-svc
+            port:
+              number: 3000
+---
+# Horizontal scaling adds more pods when resource limit is hit or reduce when utilization is below threshold for prolong periods
+apiVersion: autoscaling/v2beta2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: dov-hpa
+  labels:
+    name: dov-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: dov-deploy
+  minReplicas: 1
+  maxReplicas: 4
+  metrics:
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 70

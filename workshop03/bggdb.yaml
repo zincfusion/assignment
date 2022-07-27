@@ -1,0 +1,82 @@
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: bggdb-pvc
+  labels:
+    name: bggdb-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+  storageClassName: do-block-storage
+---
+# deployments
+# 3 dash is to demarcate a config, can have multiple configs ina file
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bggdb-deploy
+  # mandatory to have labels
+  labels:
+    name: bggdb-deploy
+spec:
+  replicas: 1
+  selector:
+    # e.g there could be multiple instances of dov-bear running but how to know which instances belong to this deployment?
+    # the matchLabels follow the template label name to ensure instances belong to this deployment, does not need to be name, could be other fields and multiple fields
+    matchLabels:
+      name: bggdb-po
+  # following specifies pod
+  template:
+    metadata:
+      name: bggdb-po
+      labels:
+        name: bggdb-po
+    spec:
+      volumes:
+      - name: data-vol
+        persistentVolumeClaim:
+          claimName: bggdb-pvc
+      # initContainers:
+      # - name: bggdb-init
+      #   image: stackupiss/bgg-database:v1
+      #   command:
+      #   - "rm -rf /var/lib/mysql"
+      #   volumeMounts:
+      #   - name: data-vol
+      #     mountPath: /var/lib/mysql
+      containers:
+      # array
+      - name: bgg-database
+        image: stackupiss/bgg-database:v1
+        # following controls how to handle when there is no image
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 3306
+        volumeMounts:
+        - name: data-vol
+          mountPath: /var/lib/mysql
+---
+# accessing the application section (clusterIP, NodePort)
+apiVersion: v1
+kind: Service
+metadata:
+  name: bggdb-svc
+  labels:
+    name: bggdb-svc
+spec:
+  # provide internal IP address (within cloud)
+  # type: ClusterIP
+  # type: NodePort
+  # LoadBalancer will provide external IP, can check using kubectl get po,deploy,svc -nmyns -owide
+  # type: LoadBalancer
+  type: ClusterIP
+  selector:
+    name: bggdb-po
+  ports:
+  # service port 80
+  - port: 3306
+    targetPort: 3306

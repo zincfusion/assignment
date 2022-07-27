@@ -1,0 +1,69 @@
+---
+apiVersion: apps/v1 
+kind: Deployment 
+metadata:
+  name: fortune-deploy
+  labels:
+    name: fortune-deploy
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      name: fortune-po
+  template: 
+    metadata:
+      name: fortune-po
+      labels:
+        name: fortune-po
+    spec:
+      containers:
+      - name: fortune
+        image: chukmunnlee/fortune:v2
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 3000
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 3000
+---
+apiVersion: v1 
+kind: Service 
+metadata:
+  name: fortune-svc
+  labels:
+    name: fortune-svc
+spec:
+  type: ClusterIP
+  selector: 
+    name: fortune-po
+  ports:
+  - port: 3000
+    targetPort: 3000
+---
+# Ingress confirguration for this app, nginx.yaml must be deployed first
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: fortune-ing
+  annotations:
+    nginx.ingress.kubernetes.io/limit-rps: “5“
+  labels:
+    name: fortune-ing
+spec:
+  # k get ingressclass
+  ingressClassName: nginx
+  # how to route the traffic
+  rules:
+  # url for browser, uses nip.io
+  - host: fortune-139.59.192.228.nip.io
+    http:
+      paths:
+      - path: /
+        # anything that starts with / are routed to 
+        pathType: Prefix
+        backend:
+          service:
+            name: fortune-svc
+            port:
+              number: 3000

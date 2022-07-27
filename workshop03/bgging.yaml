@@ -1,0 +1,33 @@
+---
+# Ingress confirguration for this app, nginx or another ingress controller must be deployed first
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: bgg-ing
+  labels:
+    name: bgg-ing
+spec:
+  # k get ingressclass
+  ingressClassName: nginx
+  # how to route the traffic
+  rules:
+  # url for browser, uses nip.io
+  - host: bgg-139.59.192.228.nip.io
+    http:
+      paths:
+      - path: /v1
+        # anything that starts with / are routed to bggapp1-svc
+        pathType: Prefix
+        backend:
+          service:
+            name: bggapp1-svc
+            port:
+              number: 3000
+      - path: /v2
+        # anything that starts with / are routed to bggapp2-svc
+        pathType: Prefix
+        backend:
+          service:
+            name: bggapp2-svc
+            port:
+              number: 3000

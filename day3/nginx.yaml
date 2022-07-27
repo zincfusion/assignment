@@ -1,0 +1,21 @@
+# prerequisite for deployments that have ingress configuration
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nginx-po
+  labels:
+    name: nginx-po
+spec:
+  volumes:
+  - name: data-vol
+    emptyDir: {}
+  containers:
+  - name: nginx
+    image: nginx:1.23
+    imagePullPolicy: IfNotPresent
+    ports:
+    - containerPort: 80
+    volumeMounts:
+    - name: data-vol
+      mountPath: /usr/share/nginx/html
