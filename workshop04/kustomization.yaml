@@ -1,0 +1,21 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+- mysql-deployment.yaml
+- wordpress-deployment.yaml
+- netpol.yaml
+
+namespace: wpns
+
+replicas:
+- name: wordpress
+  count: 1
+
+patchesStrategicMerge:
+- patch.yaml
+
+secretGenerator:
+- name: mysql-pass
+  literals:
+  - password=changePW
