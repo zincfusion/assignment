@@ -9,26 +9,26 @@ spec:
     - port: 3306
       targetPort: 3306
   selector:
-    name: wordpress-po
+    name: mysql-po
   # headless service
   clusterIP: None
 ---
 apiVersion: apps/v1
 # can use stateful set, stateful set allows a fixed name unlike deployment (stateless)
-# stateful set name: wpdb-sts-0
-# deployment name: wordpress-mysql-5dc54599cf-j44st
+# stateful set name: mysql-sts-0
+# deployment name: mysql-sts-5dc54599cf-j44st
 # stateful allows a fixed FQDN to the pod
 kind: StatefulSet
 metadata:
-  name: wordpress-db-sts
+  name: mysql-sts
   labels:
-    name: wordpress-db-sts
+    name: mysql-sts
 spec:
   replicas: 1
   serviceName: wordpress-mysql
   selector:
     matchLabels:
-      name: wordpress-po
+      name: mysql-po
   volumeClaimTemplates:
   - metadata:
       name: mysql-pv-claim
@@ -41,9 +41,9 @@ spec:
       storageClassName: do-block-storage 
   template:
     metadata:
-      name: wordpress-po
+      name: mysql-po
       labels:
-        name: wordpress-po
+        name: mysql-po
     spec:
       containers:
       - name: mysql
