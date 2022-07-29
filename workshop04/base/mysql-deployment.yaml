@@ -1,16 +1,15 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: wordpress-mysql
+  name: mysql-hsvc
   labels:
-    app: wordpress
+    name: mysql-hsvc
 spec:
   ports:
     - port: 3306
       targetPort: 3306
   selector:
-    app: wordpress
-    tier: mysql
+    name: wordpress-po
   # headless service
   clusterIP: None
 ---
@@ -21,21 +20,18 @@ apiVersion: apps/v1
 # stateful allows a fixed FQDN to the pod
 kind: StatefulSet
 metadata:
-  name: wordpress-mysql
+  name: wordpress-db-sts
   labels:
-    app: wordpress
+    name: wordpress-db-sts
 spec:
   replicas: 1
   serviceName: wordpress-mysql
   selector:
     matchLabels:
-      app: wordpress
-      tier: mysql
+      name: wordpress-po
   volumeClaimTemplates:
   - metadata:
       name: mysql-pv-claim
-      labels:
-        app: wordpress
     spec:
       accessModes:
       - ReadWriteOnce
@@ -45,9 +41,9 @@ spec:
       storageClassName: do-block-storage 
   template:
     metadata:
+      name: wordpress-po
       labels:
-        app: wordpress
-        tier: mysql
+        name: wordpress-po
     spec:
       containers:
       - name: mysql

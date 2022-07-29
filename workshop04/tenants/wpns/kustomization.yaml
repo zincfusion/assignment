@@ -9,7 +9,7 @@ namespace: wpns
 commonLabels:
   tenant: wpns
     
-# namePrefix: wpns-
+namePrefix: wpns-
 
 configMapGenerator:
 - name: wp-cm 
@@ -24,6 +24,18 @@ secretGenerator:
   literals:
   - MYSQL_ROOT_PASSWORD=changeit
   - MYSQL_PASSWORD=jclin29722
+
+replacements:
+- source:
+    kind: Service
+    name: mysql-hsvc
+    fieldPath: metadata.name
+  targets:
+  - select:
+      kind: StatefulSet
+      name: wordpress-sts
+    fieldPaths:
+    - spec.template.spec.containers.[name=wordpress].env.[name=WORDPRESS_DB_HOST].value
 
 patches:
 - path: ./fqdn.yaml
