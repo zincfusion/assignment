@@ -6,10 +6,19 @@ resources:
 - wordpress-deployment.yaml
 - netpol.yaml
 
-secretGenerator:
-- name: mysql-pass
+configMapGenerator:
+- name: wp-cm 
+  behavior: create
   literals:
-  - password=changePW
+  - MYSQL_DATABASE=wordpress
+  - MYSQL_USER=jclin
+
+secretGenerator:
+- name: wp-secret 
+  behavior: create
+  literals:
+  - MYSQL_ROOT_PASSWORD=changeit
+  - MYSQL_PASSWORD=jclin29722
 
 patches:
 - path: ./fqdn.yaml

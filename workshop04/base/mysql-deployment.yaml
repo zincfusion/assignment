@@ -7,6 +7,7 @@ metadata:
 spec:
   ports:
     - port: 3306
+      targetPort: 3306
   selector:
     app: wordpress
     tier: mysql
@@ -49,14 +50,14 @@ spec:
         tier: mysql
     spec:
       containers:
-      - image: mysql:5.6
-        name: mysql
-        env:
-        - name: MYSQL_ROOT_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: mysql-pass
-              key: password
+      - name: mysql
+        image: mysql:8.0
+        imagePullPolicy: IfNotPresent
+        envFrom:
+        - configMapRef:
+            name: wp-cm
+        - secretRef:
+            name: wp-secret
         ports:
         - containerPort: 3306
           name: mysql

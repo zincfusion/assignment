@@ -11,6 +11,20 @@ commonLabels:
     
 # namePrefix: wpns-
 
+configMapGenerator:
+- name: wp-cm 
+  behavior: merge
+  literals:
+  - MYSQL_DATABASE=wpnsdb
+  - MYSQL_USER=jclin
+
+secretGenerator:
+- name: wp-secret 
+  behavior: merge
+  literals:
+  - MYSQL_ROOT_PASSWORD=changeit
+  - MYSQL_PASSWORD=jclin29722
+
 patches:
 - path: ./fqdn.yaml
   target:
