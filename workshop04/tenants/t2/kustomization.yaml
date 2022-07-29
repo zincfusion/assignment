@@ -7,15 +7,15 @@ resources:
 namespace: wpns
 
 commonLabels:
-  tenant: wpns
+  tenant: t2
     
-namePrefix: wpns-
+namePrefix: t2-
 
 configMapGenerator:
 - name: wp-cm 
   behavior: merge
   literals:
-  - MYSQL_DATABASE=wpnsdb
+  - MYSQL_DATABASE=t2db
   - MYSQL_USER=jclin
 
 secretGenerator:
@@ -23,7 +23,7 @@ secretGenerator:
   behavior: merge
   literals:
   - MYSQL_ROOT_PASSWORD=changeit
-  - MYSQL_PASSWORD=jclin29722
+  - MYSQL_PASSWORD=12345678
 
 replacements:
 - source:
