@@ -13,19 +13,6 @@ spec:
   # headless service
   clusterIP: None
 ---
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: mysql-pv-claim
-  labels:
-    app: wordpress
-spec:
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 1Gi
----
 apiVersion: apps/v1
 # can use stateful set, stateful set allows a fixed name unlike deployment (stateless)
 # stateful set name: wpdb-sts-0
@@ -43,6 +30,18 @@ spec:
     matchLabels:
       app: wordpress
       tier: mysql
+  volumeClaimTemplates:
+  - metadata:
+      name: mysql-pv-claim
+      labels:
+        app: wordpress
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      resources:
+        requests:
+          storage: 1Gi
+      storageClassName: do-block-storage 
   template:
     metadata:
       labels:
@@ -62,9 +61,5 @@ spec:
         - containerPort: 3306
           name: mysql
         volumeMounts:
-        - name: mysql-persistent-storage
+        - name: mysql-pv-claim
           mountPath: /var/lib/mysql
-      volumes:
-      - name: mysql-persistent-storage
-        persistentVolumeClaim:
-          claimName: mysql-pv-claim
