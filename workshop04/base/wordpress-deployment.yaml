@@ -5,12 +5,13 @@ metadata:
   labels:
     app: wordpress
 spec:
+  # headless service
+  clusterIP: None
   ports:
     - port: 80
   selector:
     app: wordpress
     tier: frontend
-  type: LoadBalancer
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -23,21 +24,21 @@ spec:
     - ReadWriteOnce
   resources:
     requests:
-      storage: 20Gi
+      storage: 1Gi
 ---
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
   name: wordpress
   labels:
     app: wordpress
 spec:
+  replicas: 1
+  serviceName: wordpress
   selector:
     matchLabels:
       app: wordpress
       tier: frontend
-  strategy:
-    type: Recreate
   template:
     metadata:
       labels:
@@ -65,3 +66,30 @@ spec:
       - name: wordpress-persistent-storage
         persistentVolumeClaim:
           claimName: wp-pv-claim
+---
+# Ingress confirguration for this app, nginx or another ingress controller must be deployed first
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: wp-ing
+  labels:
+    name: wp-ing
+  annotations:
+    nginx.ingress.kubernetes.io/limit-rps: "7"
+spec:
+  # k get ingressclass
+  ingressClassName: nginx
+  # how to route the traffic
+  rules:
+  # url for browser, uses nip.io wp-139.59.192.228.nip.io
+  - host: FQDN
+    http:
+      paths:
+      - path: /
+        # anything that starts with / are routed to 
+        pathType: Prefix
+        backend:
+          service:
+            name: wordpress
+            port:
+              number: 80

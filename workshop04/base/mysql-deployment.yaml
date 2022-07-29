@@ -10,6 +10,7 @@ spec:
   selector:
     app: wordpress
     tier: mysql
+  # headless service
   clusterIP: None
 ---
 apiVersion: v1
@@ -23,25 +24,25 @@ spec:
     - ReadWriteOnce
   resources:
     requests:
-      storage: 20Gi
+      storage: 1Gi
 ---
 apiVersion: apps/v1
 # can use stateful set, stateful set allows a fixed name unlike deployment (stateless)
 # stateful set name: wpdb-sts-0
 # deployment name: wordpress-mysql-5dc54599cf-j44st
-# statful allows a fixed FQDN to the pod
-kind: Deployment
+# stateful allows a fixed FQDN to the pod
+kind: StatefulSet
 metadata:
   name: wordpress-mysql
   labels:
     app: wordpress
 spec:
+  replicas: 1
+  serviceName: wordpress-mysql
   selector:
     matchLabels:
       app: wordpress
       tier: mysql
-  strategy:
-    type: Recreate
   template:
     metadata:
       labels:
